@@ -1,0 +1,51 @@
+{
+  "name": "effect-kysely",
+  "private": true,
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "exports": {
+    "./*.js": {
+      "import": "./dist/*.js",
+      "types": "./dist/*.d.ts"
+    }
+  },
+  "scripts": {
+    "prepare": "husky install",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "Gianluca Frediani <gianluca.frediani@outlook.com>",
+  "license": "MIT",
+  "peerDependencies": {
+    "@effect/schema": "^0.59.1",
+    "effect": "^2.0.3",
+    "kysely": "^0.27.2"
+  },
+  "devDependencies": {
+    "@effect/schema": "^0.59.1",
+    "@tsconfig/node20": "^20.1.2",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "effect": "^2.0.3",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^8.0.0",
+    "kysely": "^0.27.2",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "eslint --fix"
+    ],
+    "*.{css,json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}
