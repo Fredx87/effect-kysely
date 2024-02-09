@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "paths": { "effect-kysely/*": ["./src/*.ts"] }
+  },
+  "include": ["examples"]
+}

@@ -1,44 +1,75 @@
 {
   "name": "effect-kysely",
-  "private": true,
-  "version": "0.0.0",
-  "description": "",
+  "version": "0.0.2",
+  "description": "kysely adapter for effect",
   "type": "module",
+  "packageManager": "pnpm@8.15.1",
+  "files": [
+    "src",
+    "dist"
+  ],
   "exports": {
     "./*.js": {
       "import": "./dist/*.js",
       "types": "./dist/*.d.ts"
     }
   },
+  "homepage": "https://github.com/Fredx87/effect-kysely",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fredx87/effect-kysely.git"
+  },
   "scripts": {
     "prepare": "husky install",
-    "build": "tsc -p tsconfig.build.json",
+    "clean": "tsc --build --clean tsconfig.src.json && rm -rf dist",
+    "build": "tsc --build tsconfig.src.json",
     "lint": "eslint .",
-    "test": "vitest"
+    "test": "vitest",
+    "tsc:examples": "tsc --noEmit -p tsconfig.examples.json",
+    "example:setupDb": "rm examples/db/* && tsx examples/helpers/setupDb.ts",
+    "example:base": "tsx examples/base.ts",
+    "example:transaction": "tsx examples/transaction.ts",
+    "example:sqlfx": "tsx examples/sqlfx.ts"
   },
-  "keywords": [],
+  "keywords": [
+    "effect",
+    "kysely",
+    "sql",
+    "sqlfx",
+    "schema"
+  ],
   "author": "Gianluca Frediani <gianluca.frediani@outlook.com>",
   "license": "MIT",
   "peerDependencies": {
-    "@effect/schema": "^0.59.1",
-    "effect": "^2.0.3",
+    "@effect/schema": "^0.62.1",
+    "effect": "^2.3.1",
     "kysely": "^0.27.2"
   },
   "devDependencies": {
-    "@effect/schema": "^0.59.1",
+    "@changesets/cli": "^2.27.1",
+    "@effect/schema": "^0.62.1",
+    "@sqlfx/sql": "^0.44.0",
+    "@sqlfx/sqlite": "^0.44.0",
     "@tsconfig/node20": "^20.1.2",
-    "@typescript-eslint/eslint-plugin": "^6.18.1",
-    "@typescript-eslint/parser": "^6.18.1",
-    "effect": "^2.0.3",
+    "@types/better-sqlite3": "^7.6.9",
+    "@types/node": "^20.11.17",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "better-sqlite3": "^9.4.0",
+    "effect": "^2.3.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "husky": "^8.0.0",
     "kysely": "^0.27.2",
-    "lint-staged": "^15.2.0",
-    "prettier": "^3.1.1",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.3",
-    "vitest": "^1.1.3"
+    "vitest": "^1.2.2"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [

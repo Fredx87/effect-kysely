@@ -1,7 +1,8 @@
 {
-  "extends": "@tsconfig/node20/tsconfig.json",
-  "compilerOptions": {
-    "exactOptionalPropertyTypes": true
-  },
-  "include": ["src"]
+  "extends": "./tsconfig.base.json",
+  "references": [
+    { "path": "./tsconfig.src.json" },
+    { "path": "./tsconfig.test.json" },
+    { "path": "./tsconfig.examples.json" }
+  ]
 }
