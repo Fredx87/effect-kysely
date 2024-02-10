@@ -1,6 +1,6 @@
 {
   "name": "effect-kysely",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "kysely adapter for effect",
   "type": "module",
   "packageManager": "pnpm@8.15.1",
