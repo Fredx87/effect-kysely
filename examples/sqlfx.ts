@@ -43,8 +43,11 @@ const program = Effect.gen(function* (_) {
     id: S.number,
     result: Todo.Selectable,
     resultId: (_) => _.id,
-    run: (id) =>
-      createQuery(sql, db.selectFrom("todo").selectAll().where("id", "in", id)),
+    run: (ids) =>
+      createQuery(
+        sql,
+        db.selectFrom("todo").selectAll().where("id", "in", ids),
+      ),
   });
 
   const [{ id: user1_id }, { id: user2_id }] = yield* _(
