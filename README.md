@@ -95,11 +95,11 @@ You can derive the select, insert and update schemas from a schema using the `ge
 import { getSchemas } from "effect-kysely/Schema.js";
 
 /*
-User.Selectable has id, content, completed, user_id, created_at, updated_at
-User.Insertable has content, completed, user_id
-User.Updateable has content, completed, user_id, updated_at
+Todo.Selectable has id, content, completed, user_id, created_at, updated_at
+Todo.Insertable has content, completed, user_id
+Todo.Updateable has content, completed, user_id, updated_at
 */
-const User = getSchemas(_User);
+const Todo = getSchemas(_Todo);
 ```
 
 You can also derive static types for the different schemas using the `GetTypes` utility.
@@ -108,11 +108,11 @@ You can also derive static types for the different schemas using the `GetTypes` 
 import { GetTypes } from "effect-kysely/Schema.js";
 
 /*
-User["Selectable"] = S.Schema.To<User.Selectable>
-User["Insertable"] = S.Schema.To<User.Insertable>
-User["Updateable"] = S.Schema.To<User.Updateable>
+Todo["Selectable"] = S.Schema.To<Todo.Selectable>
+Todo["Insertable"] = S.Schema.To<Todo.Insertable>
+Todo["Updateable"] = S.Schema.To<Todo.Updateable>
 */
-type User = GetTypes<typeof User>;
+type Todo = GetTypes<typeof Todo>;
 ```
 
 ### Define database tables and database service
@@ -243,6 +243,7 @@ import {
   SqliteQueryCompiler,
 } from "kysely";
 import * as Sql from "@sqlfx/sqlite/node";
+import { createQuery } from "effect-kysely/sqlfx.js";
 
 const program = Effect.gen(function* (_) {
   const db = yield* _(DbTag);
@@ -259,8 +260,11 @@ const program = Effect.gen(function* (_) {
     id: S.number,
     result: Todo.Selectable,
     resultId: (_) => _.id,
-    run: (id) =>
-      createQuery(sql, db.selectFrom("todo").selectAll().where("id", "in", id)),
+    run: (ids) =>
+      createQuery(
+        sql,
+        db.selectFrom("todo").selectAll().where("id", "in", ids),
+      ),
   });
 
   const insertedTodos = yield* _(
