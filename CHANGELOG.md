@@ -1,5 +1,11 @@
 # effect-kysely
 
+## 0.3.0
+
+### Minor Changes
+
+- [#10](https://github.com/Fredx87/effect-kysely/pull/10) [`d7ba4de`](https://github.com/Fredx87/effect-kysely/commit/d7ba4de393930321b220dc37fb45f41b5632df6a) Thanks [@Fredx87](https://github.com/Fredx87)! - Updated library for effect 2.4 and schema 0.64
+
 ## 0.2.0
 
 ### Minor Changes
