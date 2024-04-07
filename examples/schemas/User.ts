@@ -10,7 +10,7 @@ const _User = S.struct({
   updated_at: columnType(S.DateFromString, S.never, S.never),
 });
 
-export type UserTable = S.Schema.From<typeof _User>;
+export type UserTable = S.Schema.Encoded<typeof _User>;
 
 export const User = getSchemas(_User);
 export type User = GetTypes<typeof User>;

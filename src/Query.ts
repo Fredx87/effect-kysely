@@ -11,44 +11,44 @@ import {
 type QueryFn<I, O> = (input: I) => Promise<O>;
 
 export const withEncoder =
-  <IFrom, ITo, O>({
+  <IEncoded, IType, O>({
     encoder,
     query,
   }: {
-    encoder: S.Schema<ITo, IFrom>;
-    query: QueryFn<IFrom, O>;
+    encoder: S.Schema<IType, IEncoded>;
+    query: QueryFn<IEncoded, O>;
   }) =>
-  (input: ITo): Effect.Effect<O, DatabaseError> =>
+  (input: IType): Effect.Effect<O, DatabaseError> =>
     Effect.gen(function* ($) {
       const encoded = yield* $(encode(encoder, input));
       return yield* $(toEffect(query, encoded));
     });
 
 export const withDecoder =
-  <OFrom, OTo>({
+  <OEncoded, OType>({
     decoder,
     query,
   }: {
-    decoder: S.Schema<OTo, OFrom>;
-    query: QueryFn<undefined, OFrom>;
+    decoder: S.Schema<OType, OEncoded>;
+    query: QueryFn<undefined, OEncoded>;
   }) =>
-  (): Effect.Effect<OTo, DatabaseError> =>
+  (): Effect.Effect<OType, DatabaseError> =>
     Effect.gen(function* ($) {
       const res = yield* $(toEffect(query, undefined));
       return yield* $(decode(decoder, res));
     });
 
 export const withCodec =
-  <IFrom, ITo, OFrom, OTo>({
+  <IEncoded, IType, OEncoded, OType>({
     encoder,
     decoder,
     query,
   }: {
-    encoder: S.Schema<ITo, IFrom>;
-    decoder: S.Schema<OTo, OFrom>;
-    query: QueryFn<IFrom, OFrom>;
+    encoder: S.Schema<IType, IEncoded>;
+    decoder: S.Schema<OType, OEncoded>;
+    query: QueryFn<IEncoded, OEncoded>;
   }) =>
-  (input: ITo): Effect.Effect<OTo, DatabaseError> =>
+  (input: IType): Effect.Effect<OType, DatabaseError> =>
     Effect.gen(function* ($) {
       const encoded = yield* $(encode(encoder, input));
       const res = yield* $(toEffect(query, encoded));
@@ -71,16 +71,22 @@ const toEffect = <I, O>(query: QueryFn<I, O>, input: I) =>
     },
   });
 
-const encode = <IFrom, ITo>(input: S.Schema<ITo, IFrom>, iTo: ITo) =>
+const encode = <IEncoded, IType>(
+  inputSchema: S.Schema<IType, IEncoded>,
+  input: IType,
+) =>
   pipe(
-    iTo,
-    S.encode(input),
+    input,
+    S.encode(inputSchema),
     Effect.mapError((parseError) => new QueryParseError({ parseError })),
   );
 
-const decode = <OFrom, OTo>(output: S.Schema<OTo, OFrom>, oFrom: OFrom) =>
+const decode = <OEncoded, OType>(
+  outputSchema: S.Schema<OType, OEncoded>,
+  encoded: OEncoded,
+) =>
   pipe(
-    oFrom,
-    S.decode(output),
+    encoded,
+    S.decode(outputSchema),
     Effect.mapError((parseError) => new QueryParseError({ parseError })),
   );

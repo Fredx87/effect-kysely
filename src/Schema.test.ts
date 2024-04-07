@@ -30,14 +30,15 @@ describe("Schema", () => {
 
       assert.equal(ast.propertySignatures.length, 2);
 
-      assert.equal(ast.propertySignatures[0].name, "id");
+      const idProp = ast.propertySignatures.find((p) => p.name === "id");
+      assert.isNotNull(idProp);
+      assert(AST.isTransform(idProp!.type));
+      assert.equal(idProp!.type.from._tag, "StringKeyword");
+      assert.equal(idProp!.type.to._tag, "NumberKeyword");
 
-      assert(AST.isTransform(ast.propertySignatures[0].type));
-      assert.equal(ast.propertySignatures[0].type.from._tag, "StringKeyword");
-      assert.equal(ast.propertySignatures[0].type.to._tag, "NumberKeyword");
-
-      assert.equal(ast.propertySignatures[1].name, "name");
-      assert.equal(ast.propertySignatures[1].type._tag, "StringKeyword");
+      const nameProp = ast.propertySignatures.find((p) => p.name === "name");
+      assert.isNotNull(nameProp);
+      assert.equal(nameProp!.type._tag, "StringKeyword");
     });
 
     test("insertable", () => {
@@ -46,21 +47,17 @@ describe("Schema", () => {
 
       assert.equal(ast.propertySignatures.length, 2);
 
-      assert.equal(ast.propertySignatures[0].name, "id");
-      assert.equal(ast.propertySignatures[0].isOptional, true);
-      assert(AST.isUnion(ast.propertySignatures[0].type));
-      assert.equal(ast.propertySignatures[0].type.types.length, 2);
-      assert.equal(
-        ast.propertySignatures[0].type.types[0]._tag,
-        "NumberKeyword",
-      );
-      assert.equal(
-        ast.propertySignatures[0].type.types[1]._tag,
-        "UndefinedKeyword",
-      );
+      const idProp = ast.propertySignatures.find((p) => p.name === "id");
+      assert.isNotNull(idProp);
+      assert.equal(idProp!.isOptional, true);
+      assert(AST.isUnion(idProp!.type));
+      assert.equal(idProp!.type.types.length, 2);
+      assert.equal(idProp!.type.types[0]._tag, "NumberKeyword");
+      assert.equal(idProp!.type.types[1]._tag, "UndefinedKeyword");
 
-      assert.equal(ast.propertySignatures[1].name, "name");
-      assert.equal(ast.propertySignatures[1].type._tag, "StringKeyword");
+      const nameProp = ast.propertySignatures.find((p) => p.name === "name");
+      assert.isNotNull(nameProp);
+      assert.equal(nameProp!.type._tag, "StringKeyword");
     });
 
     test("updateable", () => {
@@ -70,31 +67,21 @@ describe("Schema", () => {
 
       assert.equal(ast.propertySignatures.length, 2);
 
-      assert.equal(ast.propertySignatures[0].name, "id");
-      assert.equal(ast.propertySignatures[0].isOptional, true);
-      assert(AST.isUnion(ast.propertySignatures[0].type));
-      assert.equal(ast.propertySignatures[0].type.types.length, 2);
-      assert.equal(
-        ast.propertySignatures[0].type.types[0]._tag,
-        "NumberKeyword",
-      );
-      assert.equal(
-        ast.propertySignatures[0].type.types[1]._tag,
-        "UndefinedKeyword",
-      );
+      const idProp = ast.propertySignatures.find((p) => p.name === "id");
+      assert.isNotNull(idProp);
+      assert.equal(idProp!.isOptional, true);
+      assert(AST.isUnion(idProp!.type));
+      assert.equal(idProp!.type.types.length, 2);
+      assert.equal(idProp!.type.types[0]._tag, "NumberKeyword");
+      assert.equal(idProp!.type.types[1]._tag, "UndefinedKeyword");
 
-      assert.equal(ast.propertySignatures[1].name, "name");
-      assert.equal(ast.propertySignatures[1].isOptional, true);
-      assert(AST.isUnion(ast.propertySignatures[1].type));
-      assert.equal(ast.propertySignatures[1].type.types.length, 2);
-      assert.equal(
-        ast.propertySignatures[1].type.types[0]._tag,
-        "StringKeyword",
-      );
-      assert.equal(
-        ast.propertySignatures[1].type.types[1]._tag,
-        "UndefinedKeyword",
-      );
+      const nameProp = ast.propertySignatures.find((p) => p.name === "name");
+      assert.isNotNull(nameProp);
+      assert.equal(nameProp!.isOptional, true);
+      assert(AST.isUnion(nameProp!.type));
+      assert.equal(nameProp!.type.types.length, 2);
+      assert.equal(nameProp!.type.types[0]._tag, "StringKeyword");
+      assert.equal(nameProp!.type.types[1]._tag, "UndefinedKeyword");
     });
   });
 });
