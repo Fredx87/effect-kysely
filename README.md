@@ -71,7 +71,7 @@ If you try to decode/encode something with this schema, you will get an error.
 
 ### Derive a static type to be used with kysely
 
-You can derive a static type to be used with kysely from a schema using the `S.Schema.From` utility. The schema can be used to decode _from_ the database and encode data _to_ the database, so the type used with kysely is the the schema `From` type.
+You can derive a static type to be used with kysely from a schema using the `S.Schema.Encoded` utility. The schema can be used to decode _from_ the database and encode data _to_ the database, so the type used with kysely is the the schema `Encoded` type.
 
 ```ts
 /*
@@ -84,7 +84,7 @@ type TodoTable = {
     readonly updated_at: ColumnType<string, never, string>;
 }
 */
-type TodoTable = S.Schema.From<typeof _Todo>;
+type TodoTable = S.Schema.Encoded<typeof _Todo>;
 ```
 
 ### Derive select, insert and update schemas
@@ -108,9 +108,9 @@ You can also derive static types for the different schemas using the `GetTypes` 
 import { GetTypes } from "effect-kysely/Schema.js";
 
 /*
-Todo["Selectable"] = S.Schema.To<Todo.Selectable>
-Todo["Insertable"] = S.Schema.To<Todo.Insertable>
-Todo["Updateable"] = S.Schema.To<Todo.Updateable>
+Todo["Selectable"] = S.Schema.Type<Todo.Selectable>
+Todo["Insertable"] = S.Schema.Type<Todo.Insertable>
+Todo["Updateable"] = S.Schema.Type<Todo.Updateable>
 */
 type Todo = GetTypes<typeof Todo>;
 ```

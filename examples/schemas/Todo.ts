@@ -20,7 +20,7 @@ const _Todo = S.struct({
   updated_at: columnType(S.DateFromString, S.never, S.DateFromString),
 });
 
-export type TodoTable = S.Schema.From<typeof _Todo>;
+export type TodoTable = S.Schema.Encoded<typeof _Todo>;
 
 export const Todo = getSchemas(_Todo);
 export type Todo = GetTypes<typeof Todo>;

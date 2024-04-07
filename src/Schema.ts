@@ -11,83 +11,126 @@ import {
 
 export const ColumnTypeId = Symbol.for("effect-kysely/ColumnTypeId");
 
-export const GeneratedTypeId = Symbol.for("effect-kysely/GeneratedTypeId");
-
-interface ColumnTypeSchemas<STo, SFrom, ITo, IFrom, UTo, UFrom> {
-  selectSchema: S.Schema<STo, SFrom>;
-  insertSchema: S.Schema<ITo, IFrom>;
-  updateSchema: S.Schema<UTo, UFrom>;
+interface ColumnTypeSchemas<SType, SEncoded, IType, IEncoded, UType, UEncoded> {
+  selectSchema: S.Schema<SType, SEncoded>;
+  insertSchema: S.Schema<IType, IEncoded>;
+  updateSchema: S.Schema<UType, UEncoded>;
 }
 
-export const columnType = <STo, SFrom, ITo, IFrom, UTo, UFrom>(
-  selectSchema: S.Schema<STo, SFrom>,
-  insertSchema: S.Schema<ITo, IFrom>,
-  updateSchema: S.Schema<UTo, UFrom>,
-): S.Schema<ColumnType<STo, ITo, UTo>, ColumnType<SFrom, IFrom, UFrom>> => {
-  const schemas: ColumnTypeSchemas<STo, SFrom, ITo, IFrom, UTo, UFrom> = {
+export const columnType = <SType, SEncoded, IType, IEncoded, UType, UEncoded>(
+  selectSchema: S.Schema<SType, SEncoded>,
+  insertSchema: S.Schema<IType, IEncoded>,
+  updateSchema: S.Schema<UType, UEncoded>,
+): S.Schema<
+  ColumnType<SType, IType, UType>,
+  ColumnType<SEncoded, IEncoded, UEncoded>
+> => {
+  const schemas: ColumnTypeSchemas<
+    SType,
+    SEncoded,
+    IType,
+    IEncoded,
+    UType,
+    UEncoded
+  > = {
     selectSchema,
     insertSchema,
     updateSchema,
   };
-  return S.make(AST.setAnnotation(S.never.ast, ColumnTypeId, schemas));
+  return S.make(AST.annotations(S.never.ast, { [ColumnTypeId]: schemas }));
 };
 
-export const generated = <STo, SFrom>(
-  schema: S.Schema<STo, SFrom>,
-): S.Schema<Generated<STo>, Generated<SFrom>> =>
+export const generated = <SType, SEncoded>(
+  schema: S.Schema<SType, SEncoded>,
+): S.Schema<Generated<SType>, Generated<SEncoded>> =>
   columnType(schema, S.union(schema, S.undefined), schema);
 
-export const selectable = <To, From>(
-  schema: S.Schema<To, From>,
-): S.Schema<Selectable<To>, Selectable<From>> => {
-  return S.make(extractParametersFromAst(schema.ast, "selectSchema"));
+export const selectable = <Type, Encoded>({
+  ast,
+}: S.Schema<Type, Encoded>): S.Schema<
+  Selectable<Type>,
+  Selectable<Encoded>
+> => {
+  if (!AST.isTypeLiteral(ast)) {
+    return S.make(ast);
+  }
+  return S.make(
+    new AST.TypeLiteral(
+      extractParametersFromTypeLiteral(ast, "selectSchema"),
+      ast.indexSignatures,
+      ast.annotations,
+    ),
+  );
 };
 
-export const insertable = <To, From>(
-  schema: S.Schema<To, From>,
-): S.Schema<Insertable<To>, Insertable<From>> => {
-  const extracted = extractParametersFromAst(
-    schema.ast,
-    "insertSchema",
-  ) as AST.TypeLiteral;
-  const ast: AST.AST = {
-    ...extracted,
-    propertySignatures: extracted.propertySignatures.map((prop) => ({
-      ...prop,
-      type: prop.type,
-      isOptional: isOptionalType(prop.type),
-    })),
-  };
-  return S.make(ast);
+export const insertable = <Type, Encoded>({
+  ast,
+}: S.Schema<Type, Encoded>): S.Schema<
+  Insertable<Type>,
+  Insertable<Encoded>
+> => {
+  if (!AST.isTypeLiteral(ast)) {
+    return S.make(ast);
+  }
+
+  const extracted = extractParametersFromTypeLiteral(ast, "insertSchema");
+
+  const res = new AST.TypeLiteral(
+    extracted.map(
+      (prop) =>
+        new AST.PropertySignature(
+          prop.name,
+          prop.type,
+          isOptionalType(prop.type),
+          prop.isReadonly,
+          prop.annotations,
+        ),
+    ),
+    ast.indexSignatures,
+    ast.annotations,
+  );
+  return S.make(res);
 };
 
-export const updateable = <To, From>(
-  schema: S.Schema<To, From>,
-): S.Schema<Updateable<To>, Updateable<From>> => {
-  const extracted = extractParametersFromAst(
-    schema.ast,
-    "updateSchema",
-  ) as AST.TypeLiteral;
-  const ast: AST.AST = {
-    ...extracted,
-    propertySignatures: extracted.propertySignatures.map((prop) => ({
-      ...prop,
-      type: AST.createUnion([prop.type, AST.undefinedKeyword]),
-      isOptional: true,
-    })),
-  };
-  return S.make(ast);
+export const updateable = <Type, Encoded>({
+  ast,
+}: S.Schema<Type, Encoded>): S.Schema<
+  Updateable<Type>,
+  Updateable<Encoded>
+> => {
+  if (!AST.isTypeLiteral(ast)) {
+    return S.make(ast);
+  }
+
+  const extracted = extractParametersFromTypeLiteral(ast, "updateSchema");
+
+  const res = new AST.TypeLiteral(
+    extracted.map(
+      (prop) =>
+        new AST.PropertySignature(
+          prop.name,
+          AST.Union.make([prop.type, new AST.UndefinedKeyword()]),
+          true,
+          prop.isReadonly,
+          prop.annotations,
+        ),
+    ),
+    ast.indexSignatures,
+    ast.annotations,
+  );
+
+  return S.make(res);
 };
 
-export interface Schemas<To, From> {
-  Selectable: S.Schema<Selectable<To>, Selectable<From>>;
-  Insertable: S.Schema<Insertable<To>, Insertable<From>>;
-  Updateable: S.Schema<Updateable<To>, Updateable<From>>;
+export interface Schemas<Type, Encoded> {
+  Selectable: S.Schema<Selectable<Type>, Selectable<Encoded>>;
+  Insertable: S.Schema<Insertable<Type>, Insertable<Encoded>>;
+  Updateable: S.Schema<Updateable<Type>, Updateable<Encoded>>;
 }
 
-export const getSchemas = <To, From>(
-  baseSchema: S.Schema<To, From>,
-): Schemas<To, From> => ({
+export const getSchemas = <Type, Encoded>(
+  baseSchema: S.Schema<Type, Encoded>,
+): Schemas<Type, Encoded> => ({
   Selectable: selectable(baseSchema),
   Insertable: insertable(baseSchema),
   Updateable: updateable(baseSchema),
@@ -95,32 +138,37 @@ export const getSchemas = <To, From>(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface GetTypes<T extends Schemas<any, any>> {
-  Selectable: S.Schema.To<T["Selectable"]>;
-  Insertable: S.Schema.To<T["Insertable"]>;
-  Updateable: S.Schema.To<T["Updateable"]>;
+  Selectable: S.Schema.Type<T["Selectable"]>;
+  Insertable: S.Schema.Type<T["Insertable"]>;
+  Updateable: S.Schema.Type<T["Updateable"]>;
 }
 
-const extractParametersFromAst = (
-  ast: AST.AST,
+const extractParametersFromTypeLiteral = (
+  ast: AST.TypeLiteral,
   schemaType: keyof ColumnTypeSchemas<any, any, any, any, any, any>,
-): AST.AST => {
-  if (!AST.isTypeLiteral(ast)) {
-    return ast;
-  }
-  return {
-    ...ast,
-    propertySignatures: ast.propertySignatures
-      .map((prop) => {
-        if (!isColumnType(prop.type)) {
-          return prop;
-        }
-        const schemas = prop.type.annotations[
-          ColumnTypeId
-        ] as ColumnTypeSchemas<any, any, any, any, any, any>;
-        return { ...prop, type: schemas[schemaType].ast };
-      })
-      .filter((prop) => prop.type._tag !== "NeverKeyword"),
-  };
+): AST.PropertySignature[] => {
+  return ast.propertySignatures
+    .map((prop) => {
+      if (!isColumnType(prop.type)) {
+        return prop;
+      }
+      const schemas = prop.type.annotations[ColumnTypeId] as ColumnTypeSchemas<
+        any,
+        any,
+        any,
+        any,
+        any,
+        any
+      >;
+      return new AST.PropertySignature(
+        prop.name,
+        schemas[schemaType].ast,
+        prop.isOptional,
+        prop.isReadonly,
+        prop.annotations,
+      );
+    })
+    .filter((prop) => prop.type._tag !== "NeverKeyword");
 };
 
 const isColumnType = (ast: AST.AST): ast is AST.Declaration =>
