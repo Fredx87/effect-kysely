@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Compilable, InferResult } from "kysely";
-import { Client } from "@sqlfx/sql/Client";
-import { Primitive } from "@sqlfx/sql/Statement";
+import { Client } from "@effect/sql/Client";
+import { Primitive } from "@effect/sql/Statement";
 
 type InferResultType<C extends Compilable<any>> =
   InferResult<C> extends any[] ? InferResult<C>[number] : InferResult<C>;

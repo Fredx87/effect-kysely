@@ -1,6 +1,6 @@
 # effect-kysely
 
-Integrate [kysely](https://kysely.dev/) with [effect](https://www.effect.website/). Define your database tables with `@effect/schema` and use `effect-kysely` to query them with encoding and decoding support, or just use `kysely` as a query builder for [sqlfx](https://github.com/tim-smart/sqlfx).
+Integrate [kysely](https://kysely.dev/) with [effect](https://www.effect.website/). Define your database tables with `@effect/schema` and use `effect-kysely` to query them with encoding and decoding support, or just use `kysely` as a query builder for [@effect/sql](https://github.com/Effect-TS/effect/tree/main/packages/sql).
 
 ⚠️ **Warning: This library is still in development and the API is subject to change.**
 
@@ -44,23 +44,21 @@ pnpm add kysely effect @effect/schema
 import * as S from "@effect/schema/Schema";
 import { columnType } from "effect-kysely/Schema.js";
 
-const TodoId = S.number.pipe(S.brand("TodoId"));
+export const TodoId = S.Number.pipe(S.brand("TodoId"));
 
-const BooleanFromNumber = S.transform(
-  S.number,
-  S.boolean,
-  (n) => (n === 1 ? true : false),
-  (b) => (b ? 1 : 0),
-);
+const BooleanFromNumber = S.transform(S.Number, S.Boolean, {
+  decode: (n) => (n === 1 ? true : false),
+  encode: (b) => (b ? 1 : 0),
+});
 
 const _Todo = S.struct({
   // as in kysely, you can define a schema specifying a different type for select, insert, and update operations
-  id: columnType(TodoId, S.never, S.never),
-  content: S.string,
+  id: columnType(TodoId, S.Never, S.Never),
+  content: S.String,
   completed: BooleanFromNumber,
-  user_id: S.number,
-  created_at: columnType(S.DateFromString, S.never, S.never),
-  updated_at: columnType(S.DateFromString, S.never, S.DateFromString),
+  user_id: UserId,
+  created_at: columnType(S.DateFromString, S.Never, S.Never),
+  updated_at: columnType(S.DateFromString, S.Never, S.DateFromString),
 });
 ```
 
@@ -169,7 +167,7 @@ If you need to create a query decoding the result, you can use the `withDecoder`
 
 ```ts
 const selectAllTodos = withDecoder({
-  decoder: S.array(Todo.Selectable),
+  decoder: S.Array(Todo.Selectable),
   query: () => db.selectFrom("todo").selectAll().execute(),
 });
 
@@ -185,7 +183,7 @@ If you need to create a query encoding some data and decoding the result, you ca
 ```ts
 const insertTodo = withCodec({
   encoder: Todo.Insertable,
-  decoder: S.struct({ id: TodoId }),
+  decoder: S.Struct({ id: TodoId }),
   query: (todo) =>
     db
       .insertInto("todo")
@@ -212,7 +210,7 @@ The effect returned by a query execution can fail with different errors:
 
 ```ts
 const insertTodos = withEncoder({
-  encoder: S.tuple(Todo.Insertable, Todo.Insertable),
+  encoder: S.Tuple(Todo.Insertable, Todo.Insertable),
   query: ([todo1, todo2]) =>
     db.transaction().execute(async (trx) => {
       await trx.insertInto("todo").values(todo1).executeTakeFirstOrThrow();
@@ -222,16 +220,16 @@ const insertTodos = withEncoder({
 });
 ```
 
-## Use kysely as a query builder for sqlfx
+## Use kysely as a query builder for @effect/sql
 
 You need to:
 
 - Define your database tables as described above
-- create a `sqlfx` client
+- create a `@effect/sql` client
 - create a [cold Kysely instance](https://kysely.dev/docs/recipes/splitting-query-building-and-execution#cold-kysely-instances)
 
-At this point you can use `createQuery` from `effect-kysely/sqlfx.js` to create a query using `kysely` as a query builder,
-passing the `sqlfx` client and a compilable `kysely` query.
+At this point you can use `createQuery` from `effect-kysely/effect-sql.js` to create a query using `kysely` as a query builder,
+passing the `@effect/sql` client and a compilable `kysely` query.
 
 ```ts
 import { Config, Context, Effect } from "effect";
@@ -242,30 +240,34 @@ import {
   SqliteIntrospector,
   SqliteQueryCompiler,
 } from "kysely";
-import * as Sql from "@sqlfx/sqlite/node";
-import { createQuery } from "effect-kysely/sqlfx.js";
+import * as Sql from "@effect/sql-sqlite-node";
+import { createQuery } from "effect-kysely/effect-sql.js";
 
 const program = Effect.gen(function* (_) {
   const db = yield* _(DbTag);
-  const sql = yield* _(Sql.tag);
+  const sql = yield* _(Sql.client.SqliteClient);
 
-  const InsertTodo = sql.resolver("InsertTodo", {
-    request: Todo.Insertable,
-    result: S.struct({ id: TodoId }),
-    run: (todo) =>
-      createQuery(sql, db.insertInto("todo").values(todo).returning("id")),
-  });
+  const InsertTodo = yield* _(
+    Sql.resolver.ordered("InsertTodo", {
+      Request: Todo.Insertable,
+      Result: S.Struct({ id: TodoId }),
+      execute: (todo) =>
+        createQuery(sql, db.insertInto("todo").values(todo).returning("id")),
+    }),
+  );
 
-  const GetTodoById = sql.resolverId("GetTodoById", {
-    id: S.number,
-    result: Todo.Selectable,
-    resultId: (_) => _.id,
-    run: (ids) =>
-      createQuery(
-        sql,
-        db.selectFrom("todo").selectAll().where("id", "in", ids),
-      ),
-  });
+  const GetTodoById = yield* _(
+    Sql.resolver.findById("GetTodoById", {
+      Id: S.Number,
+      Result: Todo.Selectable,
+      ResultId: (_) => _.id,
+      execute: (ids) =>
+        createQuery(
+          sql,
+          db.selectFrom("todo").selectAll().where("id", "in", ids),
+        ),
+    }),
+  );
 
   const insertedTodos = yield* _(
     Effect.all(
@@ -303,8 +305,8 @@ const DbLive = new Kysely<DbTables>({
   },
 });
 
-const SqlLive = Sql.makeLayer({
-  filename: Config.succeed("example.db"),
+const SqlLive = Sql.client.layer({
+  filename: Config.succeed(createTempDb()),
 });
 
 const runnable = program.pipe(
@@ -315,19 +317,17 @@ const runnable = program.pipe(
 
 ## FAQ
 
-### What is the difference between using only this library and using it with `sqlfx`?
+### What is the difference between using only this library and using it with `@effect/sql`?
 
 If you use only `effect-kysely`:
 
 - You can use any database that has a [Kysely dialect](https://kysely.dev/docs/dialects) available
-- The results of the queries are type-checked using the schemas you defined
 - There is no support for batching and caching
 
-If you use `effect-kysely` with `sqlfx`:
+If you use `effect-kysely` with `@effect/sql`:
 
 - You can use batching and caching
-- You can use only the databases supported by `sqlfx`
-- The results of the queries are not type-checked using the schemas you defined
+- You can use only the databases supported by `@effect/sql`
 
 ## Examples
 

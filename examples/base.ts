@@ -20,7 +20,7 @@ const program = Effect.gen(function* (_) {
 
   const insertUser = withCodec({
     encoder: User.Insertable,
-    decoder: S.struct({ id: UserId }),
+    decoder: S.Struct({ id: UserId }),
     query: (user) =>
       db
         .insertInto("user")
@@ -31,7 +31,7 @@ const program = Effect.gen(function* (_) {
 
   const insertTodo = withCodec({
     encoder: Todo.Insertable,
-    decoder: S.struct({ id: TodoId }),
+    decoder: S.Struct({ id: TodoId }),
     query: (todo) =>
       db
         .insertInto("todo")
@@ -41,7 +41,7 @@ const program = Effect.gen(function* (_) {
   });
 
   const updateAllUserTodos = withEncoder({
-    encoder: S.struct({ userId: UserId, todo: Todo.Updateable }),
+    encoder: S.Struct({ userId: UserId, todo: Todo.Updateable }),
     query: ({ userId, todo }) =>
       db
         .updateTable("todo")
@@ -51,7 +51,7 @@ const program = Effect.gen(function* (_) {
   });
 
   const selectAllTodosWithUsername = withDecoder({
-    decoder: S.array(
+    decoder: S.Array(
       Todo.Selectable.pipe(
         S.omit("user_id"),
         S.extend(User.Selectable.pipe(S.pick("username"))),

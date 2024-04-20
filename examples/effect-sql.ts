@@ -7,10 +7,10 @@ import {
   SqliteQueryCompiler,
 } from "kysely";
 import * as S from "@effect/schema/Schema";
-import * as Sql from "@sqlfx/sqlite/node";
+import * as Sql from "@effect/sql-sqlite-node";
 import { Todo, TodoId, TodoTable } from "./schemas/Todo.js";
 import { User, UserId, UserTable } from "./schemas/User.js";
-import { createQuery } from "effect-kysely/sqlfx.js";
+import { createQuery } from "effect-kysely/effect-sql.js";
 import { defaultLogger } from "effect/Logger";
 import { createTempDb } from "./helpers/createTempDb.js";
 
@@ -23,32 +23,38 @@ class DbTag extends Context.Tag("DbTag")<DbTag, Kysely<DbTables>>() {}
 
 const program = Effect.gen(function* (_) {
   const db = yield* _(DbTag);
-  const sql = yield* _(Sql.tag);
+  const sql = yield* _(Sql.client.SqliteClient);
 
-  const InsertUser = sql.resolver("InsertUser", {
-    request: User.Insertable,
-    result: S.struct({ id: UserId }),
-    run: (user) =>
-      createQuery(sql, db.insertInto("user").values(user).returning("id")),
-  });
+  const InsertUser = yield* _(
+    Sql.resolver.ordered("InsertUser", {
+      Request: User.Insertable,
+      Result: S.Struct({ id: UserId }),
+      execute: (user) =>
+        createQuery(sql, db.insertInto("user").values(user).returning("id")),
+    }),
+  );
 
-  const InsertTodo = sql.resolver("InsertTodo", {
-    request: Todo.Insertable,
-    result: S.struct({ id: TodoId }),
-    run: (todo) =>
-      createQuery(sql, db.insertInto("todo").values(todo).returning("id")),
-  });
+  const InsertTodo = yield* _(
+    Sql.resolver.ordered("InsertTodo", {
+      Request: Todo.Insertable,
+      Result: S.Struct({ id: TodoId }),
+      execute: (todo) =>
+        createQuery(sql, db.insertInto("todo").values(todo).returning("id")),
+    }),
+  );
 
-  const GetTodoById = sql.resolverId("GetTodoById", {
-    id: S.number,
-    result: Todo.Selectable,
-    resultId: (_) => _.id,
-    run: (ids) =>
-      createQuery(
-        sql,
-        db.selectFrom("todo").selectAll().where("id", "in", ids),
-      ),
-  });
+  const GetTodoById = yield* _(
+    Sql.resolver.findById("GetTodoById", {
+      Id: S.Number,
+      Result: Todo.Selectable,
+      ResultId: (_) => _.id,
+      execute: (ids) =>
+        createQuery(
+          sql,
+          db.selectFrom("todo").selectAll().where("id", "in", ids),
+        ),
+    }),
+  );
 
   const [{ id: user1_id }, { id: user2_id }] = yield* _(
     Effect.all(
@@ -112,7 +118,7 @@ const DbLive = new Kysely<DbTables>({
   },
 });
 
-const SqlLive = Sql.makeLayer({
+const SqlLive = Sql.client.layer({
   filename: Config.succeed(createTempDb()),
 });
 

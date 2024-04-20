@@ -18,8 +18,8 @@ class DbTag extends Context.Tag("DbTag")<DbTag, Kysely<DbTables>>() {}
 const program = Effect.gen(function* (_) {
   const db = yield* _(DbTag);
   const insertUsers = withCodec({
-    encoder: S.tuple(User.Insertable, User.Insertable),
-    decoder: S.tuple(S.struct({ id: UserId }), S.struct({ id: UserId })),
+    encoder: S.Tuple(User.Insertable, User.Insertable),
+    decoder: S.Tuple(S.Struct({ id: UserId }), S.Struct({ id: UserId })),
     query: ([user1, user2]) =>
       db.transaction().execute(async (trx) => {
         const res1 = await trx

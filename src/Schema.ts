@@ -37,13 +37,13 @@ export const columnType = <SType, SEncoded, IType, IEncoded, UType, UEncoded>(
     insertSchema,
     updateSchema,
   };
-  return S.make(AST.annotations(S.never.ast, { [ColumnTypeId]: schemas }));
+  return S.make(AST.annotations(S.Never.ast, { [ColumnTypeId]: schemas }));
 };
 
 export const generated = <SType, SEncoded>(
   schema: S.Schema<SType, SEncoded>,
 ): S.Schema<Generated<SType>, Generated<SEncoded>> =>
-  columnType(schema, S.union(schema, S.undefined), schema);
+  columnType(schema, S.Union(schema, S.Undefined), schema);
 
 export const selectable = <Type, Encoded>({
   ast,

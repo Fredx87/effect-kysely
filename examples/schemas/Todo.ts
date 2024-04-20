@@ -2,22 +2,20 @@ import * as S from "@effect/schema/Schema";
 import { GetTypes, columnType, getSchemas } from "effect-kysely/Schema.js";
 import { UserId } from "./User.js";
 
-export const TodoId = S.number.pipe(S.brand("TodoId"));
+export const TodoId = S.Number.pipe(S.brand("TodoId"));
 
-const BooleanFromNumber = S.transform(
-  S.number,
-  S.boolean,
-  (n) => (n === 1 ? true : false),
-  (b) => (b ? 1 : 0),
-);
+const BooleanFromNumber = S.transform(S.Number, S.Boolean, {
+  decode: (n) => (n === 1 ? true : false),
+  encode: (b) => (b ? 1 : 0),
+});
 
-const _Todo = S.struct({
-  id: columnType(TodoId, S.never, S.never),
-  content: S.string,
+const _Todo = S.Struct({
+  id: columnType(TodoId, S.Never, S.Never),
+  content: S.String,
   completed: BooleanFromNumber,
   user_id: UserId,
-  created_at: columnType(S.DateFromString, S.never, S.never),
-  updated_at: columnType(S.DateFromString, S.never, S.DateFromString),
+  created_at: columnType(S.DateFromString, S.Never, S.Never),
+  updated_at: columnType(S.DateFromString, S.Never, S.DateFromString),
 });
 
 export type TodoTable = S.Schema.Encoded<typeof _Todo>;

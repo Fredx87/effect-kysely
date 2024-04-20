@@ -5,13 +5,13 @@ import { columnType, insertable, selectable, updateable } from "./Schema.js";
 
 describe("Schema", () => {
   describe("columnType", () => {
-    const _TodoTable = S.struct({
+    const _TodoTable = S.Struct({
       id: columnType(
         S.NumberFromString,
-        S.union(S.number, S.undefined),
-        S.number,
+        S.Union(S.Number, S.Undefined),
+        S.Number,
       ),
-      name: S.string,
+      name: S.String,
     });
 
     test("cannot use schema directly", () => {
@@ -32,7 +32,7 @@ describe("Schema", () => {
 
       const idProp = ast.propertySignatures.find((p) => p.name === "id");
       assert.isNotNull(idProp);
-      assert(AST.isTransform(idProp!.type));
+      assert(AST.isTransformation(idProp!.type));
       assert.equal(idProp!.type.from._tag, "StringKeyword");
       assert.equal(idProp!.type.to._tag, "NumberKeyword");
 
